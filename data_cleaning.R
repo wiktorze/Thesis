@@ -1,23 +1,26 @@
 rm(list=ls())
+install.packages("pacman")
 pacman::p_load(data.table, haven, stringr, sf, sp)
 
-# copy the data
+setwd("./Thesis")
+# copy the data using copy_data.sh
+system("sh copy_data.sh")
 
 # Load the data -----------------------------------------------------------
 
-pop = as.data.table(read_dta("/s3/wiktorze/s3/wiktorze/Thesis/blockpop.dta"))
+pop = as.data.table(read_dta("./Replication_data/blockpop.dta"))
 
-crime = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/crimeblocks.dta"))
+crime = as.data.table(read_dta("./Replication_data/crimeblocks.dta"))
 
-blocks = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/latlongblocks.dta"))
+blocks = as.data.table(read_dta("./Replication_data/latlongblocks.dta"))
 
-housing = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/Public_Housing.dta"))
+housing = as.data.table(read_dta("./Replication_data/Public_Housing.dta"))
 
-units = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/CHAdemo_units.dta"))
+units = as.data.table(read_dta("./Replication_data/CHAdemo_units.dta"))
 
-demo = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/CHAdemo.dta"))
+demo = as.data.table(read_dta("./Replication_data/CHAdemo.dta"))
 
-housing_tract = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/PH_CensusTract_Xwalk.dta"))
+housing_tract = as.data.table(read_dta("./Replication_data/PH_CensusTract_Xwalk.dta"))
 tracts = unique(housing_tract$tract)
 
 
@@ -109,14 +112,13 @@ units[, demo_start := as.Date(demo_start, origin = "1960-01-01")]
 units[, demo_end := as.Date(demo_end, origin = "1960-01-01")]
 
 # Merge units with housing to get lat long
-units_merged = merge(units, housing, on = demo_id)
-units_merged = units_merged[units > 75,]
+units_merged = merge(units, housing, on = "demo_id")
 
 # blocks - read shp file
-blocks = st_read("/Users/mac/Documents/Thesis/Data/Boundaries - Census Blocks - 2010/geo_export_6b335484-a783-41d6-b02b-408cc5dbd4ad.shp")
-blocks = blocks[[, c("tract_bloc", "geometry")]]
+blocks = st_read("./Boundaries - Census Blocks - 2010/geo_export_6b335484-a783-41d6-b02b-408cc5dbd4ad.shp")
+blocks = blocks[, c("tract_bloc", "geometry")]
 # census tracts - read shp file
-tracts = st_read("/Users/mac/Documents/Thesis/Data/Boundaries - Census Tracts - 2010/geo_export_24a3592a-4039-4f19-afd3-987209b1f813.shp")
+tracts = st_read("./Boundaries - Census Tracts - 2010/geo_export_24a3592a-4039-4f19-afd3-987209b1f813.shp")
 
 # Spatial match (intersection) between chicago_buf centroid and blocks
 invalid_blocks = !st_is_valid(blocks)
@@ -148,7 +150,8 @@ for (i in 1:nrow(units_merged)) {
 
 length(unlist(block_names))
 length(unique(unlist(block_names)))
-# 19,191 blocks
+# 19,191 blocks for >75 units
+# 23,191 unique blocks for all
 
 # add blocks_unique to the plot
 plot(st_geometry(valid_blocks[tract_bloc %in% blocks_unique,], add = T, col = "red"))
@@ -174,12 +177,12 @@ nrow(crime) - nrow(crime_clean)
 blocks_box = st_bbox(blocks_analyze)
 crime_clean = crime_clean[crime_long > blocks_box[1] & crime_long < blocks_box[3] & crime_lat > blocks_box[2] & crime_lat < blocks_box[4],]
 crime_points = st_as_sf(crime_clean, coords = c("crime_long", "crime_lat"), crs = st_crs(blocks_analyze))
-# Check if the points are in the blocks
+# Get the crimes that are in the blocks
 crime_analyze = st_intersection(crime_points, blocks_analyze)
 
 # Save the blocks and crimes
-st_write(blocks_analyze, "/Users/mac/Documents/Thesis/Data/blocks_analyze.shp")
-st_write(crime_analyze, "/Users/mac/Documents/Thesis/Data/crime_analyze.shp")
+st_write(blocks_analyze, "blocks_analyze.shp")
+st_write(crime_analyze, "crime_analyze.shp")
 
 # add crimes to current plot
 plot(st_geometry(blocks_analyze), border="#aaaaaa")

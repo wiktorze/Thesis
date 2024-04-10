@@ -1,0 +1,26 @@
+=============================================================================================================
+TABLE INFO
+=============================================================================================================
+
+ID: DECENNIALDPSF22000.DP1
+Title: Profile of General Demographic Characteristics: 2000
+
+=============================================================================================================
+Notes
+=============================================================================================================
+
+<p>When a race or ethnic group is selected, the data in this table\nrefer to the race, Hispanic or Latino origin, or American Indian or\nAlaska Native tribe of the householder.<\/p>
+
+-------------------------------------------------------------------------------------------------------------
+
+<p>(X) Not applicable.\n<br /><\/p>
+
+-------------------------------------------------------------------------------------------------------------
+
+<p>NOTE: For information on confidentiality protection, nonsampling\nerror, definitions, and count corrections see\n<a href=\"http://www.census.gov/prod/cen2000/doc/sf2.pdf\">http://www.census.gov/prod/cen2000/doc/sf2.pdf<\/a><\/p>
+
+-------------------------------------------------------------------------------------------------------------
+
+<p>Source: U.S. Census Bureau, Census 2000 Summary File 2, Matrices\nPCT3, PCT4, PCT8, PCT9, PCT10, PCT11, PCT14, PCT18, PCT19, PCT23,\nPCT26, HCT2, and HCT5.\n<br /><\/p>
+
+-------------------------------------------------------------------------------------------------------------
