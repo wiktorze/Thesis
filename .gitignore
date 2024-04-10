@@ -5,3 +5,6 @@ MnA/s3/
 *.csv
 Replication_data
 .dta
+*.dbf
+*.cpg
+*.prj
