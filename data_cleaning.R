@@ -1,10 +1,11 @@
 rm(list=ls())
 pacman::p_load(data.table, haven, stringr, sf, sp)
 
+# copy the data
 
 # Load the data -----------------------------------------------------------
 
-pop = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/blockpop.dta"))
+pop = as.data.table(read_dta("/s3/wiktorze/s3/wiktorze/Thesis/blockpop.dta"))
 
 crime = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/crimeblocks.dta"))
 
