@@ -8,8 +8,6 @@ pop = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/
 
 crime = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/crimeblocks.dta"))
 
-blocks = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/latlongblocks.dta"))
-
 housing = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/Public_Housing.dta"))
 
 units = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/CHAdemo_units.dta"))
@@ -22,6 +20,7 @@ housing_tract = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Re
 units[, demo_date := as.Date(demo_date, origin = "1960-01-01")]
 units[, demo_start := as.Date(demo_start, origin = "1960-01-01")]
 units[, demo_end := as.Date(demo_end, origin = "1960-01-01")]
+units = units[demo_start >= "1999-01-01"]
 
 # Merge units with housing to get lat long
 units_merged = merge(units, housing, on = demo_id)
@@ -51,7 +50,7 @@ units_merged_dt = as.data.table(units_merged_sf)
 units_merged_dt[, demo_month := month(demo_closure)]
 units_merged_dt[, demo_year := year(demo_closure)]
 # New field with month and year
-units_merged_dt[, month_year := paste(demo_month, demo_year, sep = "/")]
+units_merged_dt[, month_year := as.Date(paste("01", demo_month, demo_year, sep = "/"), format = "%d/%m/%Y")]
 # Count units demolished per tractce and month_year
 units_per_tract = units_merged_dt[, .(no_units = sum(units)), by = c("tractce10", "month_year")]
 
@@ -65,7 +64,7 @@ tracts_dt = tracts_dt[rep(seq_len(nrow(tracts_dt)), each = 12), .(tractce10, yea
 tracts_dt = tracts_dt[rep(seq_len(nrow(tracts_dt)), each = 12), .(tractce10, year, month = 1:12)]
 
 # Based on the year and month, create a new field with the month and year
-tracts_dt[, month_year := paste(month, year, sep = "/")]
+tracts_dt[, month_year := as.Date(paste("01", month, year, sep = "/"), format = "%d/%m/%Y")]
 
 # Now, add units from units_per_tract to tracts_dt
 tracts_dt = merge(tracts_dt, units_per_tract, by = c("tractce10", "month_year"), all.x = TRUE) 
@@ -107,6 +106,10 @@ crime_clean = crime_clean[!is.na(tractce10)]
 
 # Aggregate crimes by month, year, tractce10 and sum total, econ_crime, violent_crime and drug_crime
 crime_agg = crime_clean[, lapply(.SD, sum), by = .(monthofyear, year, tractce10), .SDcols = c("total", "econ_crime", "violent_crime", "drug_crime")]
-
+crime_agg[, month_year := as.Date(paste("01", monthofyear, year, sep = "/"), format = "%d/%m/%Y")]
 # Write the crime_agg
 fwrite(crime_agg, "crime_agg_tract.csv")
+
+# Join number of units demolished to the crime_agg
+crime_agg_units = merge(crime_agg, tracts_dt, by = c("tractce10", "month_year"))
+fwrite(crime_agg_units, "crime_agg_units.csv")
