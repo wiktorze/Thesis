@@ -105,7 +105,7 @@ setnames(subset_housing, colnames(subset_housing), cnames)
 units[, demo_date := as.Date(demo_date, origin = "1960-01-01")]
 units[, demo_start := as.Date(demo_start, origin = "1960-01-01")]
 units[, demo_end := as.Date(demo_end, origin = "1960-01-01")]
-
+units = units[demo_start >= "1999-01-01"]
 # Merge units with housing to get lat long
 units_merged = merge(units, housing, on = demo_id)
 
@@ -180,8 +180,7 @@ crime_bloc[, econ_crime := fifelse(burglary!=0 | theft != 0 | car_theft != 0 | r
                               rowSums(crime_bloc[, c("burglary", "theft", "car_theft", "robbery")], na.rm = TRUE),
                               0)] 
 crime_bloc[, violent_crime := fifelse(murder != 0 | assault != 0 | rape != 0 | arson != 0, 
-rowSums(crime_bloc[,.(murder, assault, rape, arson)], na.rm = TRUE), 
-0)]
+rowSums(crime_bloc[,.(murder, assault, rape, arson)], na.rm = TRUE), 0)]
 crime_bloc[, drug_crime := drugs]
 
 # Aggregate crimes
@@ -189,7 +188,7 @@ crime_agg_bloc = crime_bloc[, lapply(.SD, sum), by = .(monthofyear, year, tract_
 
 
 # Save the blocks and crimes
-st_write(blocks_analyze, "blocks_analyze.shp")
+st_write(blocks_analyze, "blocks_analyze.shp", update = T)
 # Save crime_agg_bloc
 fwrite(crime_agg_bloc, "crime_agg_bloc.csv")
 

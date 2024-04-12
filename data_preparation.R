@@ -107,3 +107,6 @@ crime_clean = crime_clean[!is.na(tractce10)]
 
 # Aggregate crimes by month, year, tractce10 and sum total, econ_crime, violent_crime and drug_crime
 crime_agg = crime_clean[, lapply(.SD, sum), by = .(monthofyear, year, tractce10), .SDcols = c("total", "econ_crime", "violent_crime", "drug_crime")]
+
+# Write the crime_agg
+fwrite(crime_agg, "crime_agg_tract.csv")
