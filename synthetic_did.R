@@ -8,7 +8,7 @@ dt_analyze = dt[, c("tractce10", "month_year", "total", "econ_crime", "violent_c
 dt_analyze[, year := year(month_year)]
 dt_analyze[, month := month(month_year)]
 # Create the treatment variable: treated if stock_units > 0
-dt_analyze$treat_post = ifelse(dt_analyze$stock_units > 50, 1, 0)
+dt_analyze$treat_post = ifelse(dt_analyze$stock_units > 0, 1, 0)
 
 # Create the overall treatment variable - 1 if tract has ever been treated
 # if ever treat_post = 1 then all values in treat = 1
