@@ -106,6 +106,7 @@ units[, demo_date := as.Date(demo_date, origin = "1960-01-01")]
 units[, demo_start := as.Date(demo_start, origin = "1960-01-01")]
 units[, demo_end := as.Date(demo_end, origin = "1960-01-01")]
 units = units[demo_start >= "1999-01-01"]
+
 # Merge units with housing to get lat long
 units_merged = merge(units, housing, on = demo_id)
 
@@ -142,6 +143,7 @@ for (i in 1:nrow(units_merged)) {
 }
 
 length(unique(unlist(block_names)))
+blocks_unique = unique(unlist(block_names))
 # 19,191 blocks for >75 units
 # 23,977 unique blocks for all
 
