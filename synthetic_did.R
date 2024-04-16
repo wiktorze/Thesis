@@ -67,7 +67,7 @@ model <- gsynth(total ~ treat_post,
                nboots = 1000, seed = 02139)
 plot(model, type = "gap", xlim = c(-24, 24))
 # Plot treated vs control lines
-plot(model, type = "raw", xlab = "Month", ylab = "Total crimes")
+plot(model, type = "counterfactual", raw = "all")
 
 # Change the treatment time by -2
 # treat_post 2 = 1 when time_index >= first_treat - 2
