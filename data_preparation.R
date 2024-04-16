@@ -49,10 +49,14 @@ units_merged_sf$tractce10 <- units_merged_tract$tractce10
 units_merged_dt = as.data.table(units_merged_sf)
 units_merged_dt[, demo_month := month(demo_closure)]
 units_merged_dt[, demo_year := year(demo_closure)]
+units_merged_dt[, demo_month_e := month(demo_eviction)]
+units_merged_dt[, demo_year_e := year(demo_eviction)]
 # New field with month and year
 units_merged_dt[, month_year := as.Date(paste("01", demo_month, demo_year, sep = "/"), format = "%d/%m/%Y")]
+units_merged_dt[, month_year_e := as.Date(paste("01", demo_month_e, demo_year_e, sep = "/"), format = "%d/%m/%Y")]
 # Count units demolished per tractce and month_year
 units_per_tract = units_merged_dt[, .(no_units = sum(units)), by = c("tractce10", "month_year")]
+units_per_tract_e = units_merged_dt[, .(no_units = sum(units)), by = c("tractce10", "month_year_e")]
 
 # Now, create a new data.table with all the tracts and dates in tracts sf and the number of demolished units
 # for each tract and date
@@ -67,14 +71,17 @@ tracts_dt = tracts_dt[rep(seq_len(nrow(tracts_dt)), each = 12), .(tractce10, yea
 tracts_dt[, month_year := as.Date(paste("01", month, year, sep = "/"), format = "%d/%m/%Y")]
 
 # Now, add units from units_per_tract to tracts_dt
+tracts_dt_e = merge(tracts_dt, units_per_tract_e, by.x = c("tractce10", "month_year"), by.y = c("tractce10", "month_year_e"), all.x = TRUE)
 tracts_dt = merge(tracts_dt, units_per_tract, by = c("tractce10", "month_year"), all.x = TRUE) 
 
 # Replace NAs with 0
 tracts_dt[is.na(no_units), no_units := 0]
+tracts_dt_e[is.na(no_units), no_units := 0]
 
 # Now, compute the stock of demolished units for each tract and month_year in time
 # so, for each tract, compute the cumulative sum of demolished units
 tracts_dt[, stock_units := cumsum(no_units), by = tractce10]
+tracts_dt_e[, stock_units := cumsum(no_units), by = tractce10]
 # Show tractce10 == 080400 sorted by month_year
 # View(tracts_dt[tractce10 == "080400", .(tractce10, month_year, no_units, stock_units)][order(month_year)])
 # Works!
@@ -113,3 +120,6 @@ fwrite(crime_agg, "crime_agg_tract.csv")
 # Join number of units demolished to the crime_agg
 crime_agg_units = merge(crime_agg, tracts_dt, by = c("tractce10", "month_year"))
 fwrite(crime_agg_units, "crime_agg_units.csv")
+
+crime_agg_units_e = merge(crime_agg, tracts_dt_e, by = c("tractce10", "month_year"))
+fwrite(crime_agg_units_e, "crime_agg_units_e.csv")
