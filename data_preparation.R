@@ -37,7 +37,9 @@ units_merged[, demo_eviction := demo_start - 150]
 units_merged_sf = st_as_sf(units_merged, coords = c("project_long", "project_lat"), crs = st_crs(tracts))
 
 # Plot them
+# plot tractce==839100
 plot(st_geometry(tracts), border="#aaaaaa")
+plot(st_geometry(tracts[tracts$tractce10=="839100",]), add = TRUE, col = "red")
 plot(st_geometry(units_merged_sf), add = TRUE, pch = 20, col = "red")
 
 # To each demolished unit, get the tractce10
@@ -105,6 +107,8 @@ monthofyear, year, total, econ_crime, violent_crime, drug_crime)]
 # So, for each crime, have tractce10 from tracts
 # First, create a centroid out of crime_lat and crime_long
 crime_points = st_as_sf(crime_clean, coords = c("crime_long", "crime_lat"), crs = st_crs(tracts))
+# add crimes on the plot
+points(crime_clean$crime_long, crime_clean$crime_lat, col = "red", pch = 10)
 
 # Join tracts to crimes
 crime_tracts = st_join(crime_points, tracts, join = st_intersects)
