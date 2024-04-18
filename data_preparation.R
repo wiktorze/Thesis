@@ -7,7 +7,11 @@ pacman::p_load(data.table, haven, stringr, sf, sp, parallel)
 pop = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/blockpop.dta"))
 
 crime = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/crimeblocks.dta"))
+ph_tract = fread("/Users/mac/Documents/Thesis/100512-V1/Replication/PH_CensusTract_Xwalk.csv")
+#rename project_la to project_lat, project_lo to project_long
+setnames(ph_tract, c("project_la", "project_lo"), c("project_lat", "project_long"))
 
+ph = fread("/Users/mac/Documents/Thesis/100512-V1/Replication/public_housing_geocode.csv")
 housing = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/Public_Housing.dta"))
 
 units = as.data.table(read_dta("/Users/mac/Documents/Thesis/100512-V1/Replication/CHAdemo_units.dta"))
@@ -21,7 +25,7 @@ units[, demo_end := as.Date(demo_end, origin = "1960-01-01")]
 units = units[demo_start >= "1999-01-01"]
 
 # Merge units with housing to get lat long
-units_merged = merge(units, housing_tract, on = demo_id)
+units_merged = merge(units, ph_tract, on = demo_id)
 
 # census tracts - read shp file
 tracts = st_read("/Users/mac/Documents/Thesis/Data/Boundaries - Census Tracts - 2000/geo_export_f3cf6886-99ef-450b-9003-4ce53146d95c.shp")
@@ -43,7 +47,8 @@ plot(st_geometry(units_merged_sf), add = TRUE, pch = 20, col = "red")
 # To each demolished unit, get the census_t_1
 units_merged_tract = st_join(units_merged_sf, tracts, join = st_intersects)
 units_merged_sf$census_t_1 <- units_merged_tract$census_t_1
-# 42 tracts for units_merged_sf
+# count census_t_1
+length(unique(units_merged_sf$census_t_1))
 
 # Take demo_closure as the treatment time - extract month and year from demo_closure
 units_merged_dt = as.data.table(units_merged_sf)
@@ -82,9 +87,6 @@ tracts_dt_e[is.na(no_units), no_units := 0]
 # so, for each tract, compute the cumulative sum of demolished units
 tracts_dt[, stock_units := cumsum(no_units), by = census_t_1]
 tracts_dt_e[, stock_units := cumsum(no_units), by = census_t_1]
-# Show census_t_1 == 080400 sorted by month_year
-# View(tracts_dt[census_t_1 == "080400", .(census_t_1, month_year, no_units, stock_units)][order(month_year)])
-# Works!
 
 ### CRIME ###
 # Classify crime by type - econ crime, violent crime and drug crime
@@ -121,9 +123,10 @@ fwrite(crime_agg, "crime_agg_tract.csv")
 
 # Join number of units demolished to the crime_agg
 crime_agg_units = merge(crime_agg, tracts_dt, by = c("census_t_1", "month_year"))
+# Check how many tracts have stock_units>0
+length(unique(crime_agg_units[census_t_1 %in% crime_agg_units[stock_units > 0, census_t_1], census_t_1]))
+# still 42
 fwrite(crime_agg_units, "crime_agg_units.csv")
 
 crime_agg_units_e = merge(crime_agg, tracts_dt_e, by = c("census_t_1", "month_year"))
 fwrite(crime_agg_units_e, "crime_agg_units_e.csv")
-
-### Get the tracts that touch the boundary of the tracts where no. units > 0 ###

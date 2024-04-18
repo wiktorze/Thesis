@@ -2,7 +2,8 @@
 rm(list=ls())
 pacman::p_load(data.table, haven, stringr, sf, sp, parallel, readxl)
 crime = fread("crime_agg_units.csv")
-treated_units_before = crime[stock_units > 0, .N, by = census_t_1]
+treated_units_before = crime[stock_units > 0, sum(no_units), by = census_t_1]
+sum(treated_units_before$V1)
 # View(crime)
 # Read txt files including zeros
 pop <- read.table("/Users/mac/Downloads/tract_pop.txt", header = FALSE, sep = ",", 
@@ -45,8 +46,9 @@ crime_rate[, crime_rate := fifelse(pop != 0, total/pop*1000, 0)]
 
 fwrite(crime_rate, "crime_rate.csv")
 # number of treated units - tracts where stock_units > 0
-treated_units = crime_rate[stock_units > 0, .N, by = census_t_1]
-# 38 vs 41 at the beginning
+treated_units = crime_rate[stock_units > 0, .(no_units = sum(no_units)), by = census_t_1]
+sum(treated_units$no_units)
+# 39 vs 41 at the beginning
 
 # Aggregate crimes by quarter
 crime_rate[, month_year := as.Date(month_year, format = "%m/%d/%Y")]
@@ -65,6 +67,7 @@ tracts_to_drop = unique(crime_rate_q[crime_rate > 100, census_t_1])
 crime_rate_q_trimmed = crime_rate_q[!census_t_1 %in% tracts_to_drop]
 summary(crime_rate_q_trimmed$crime_rate)
 # number of treated units - tracts where stock_units > 0
-treated_units = crime_rate_q_trimmed[stock_units > 0, .N, by = census_t_1]
+treated_units = crime_rate_q_trimmed[stock_units > 0, .(no_units = sum(no_units)), by = census_t_1]
+sum(treated_units$no_units)
 # lost another 2 treated units
 fwrite(crime_rate_q_trimmed, "crime_rate_q_trimmed.csv")
