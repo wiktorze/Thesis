@@ -3,13 +3,11 @@
 rm(list=ls())
 pacman::p_load(gsynth, data.table, panelView)
 dt = fread("crime_rate.csv")
-View(dt[is.na(crime_rate)])
-# drop tract 231400 as population = 2...
-dt = dt[census_t_1 != "17031231400"]
-# drop as crime_rate = NA
-dt = dt[census_t_1 != "17031283400"]
-dt = dt[census_t_1 != "17031561200"]
-dt = dt[census_t_1 != "17031581000"]
+View(dt)
+summary(dt$crime_rate)
+summary(dt$pop)
+summary(dt$total)
+
 dt_analyze = dt[, c("census_t_1", "month_year", "total", "crime_rate", "econ_crime", "violent_crime", "drug_crime", "no_units", "stock_units")]
 dt_analyze[, year := year(month_year)]
 dt_analyze[, month := month(month_year)]
@@ -85,13 +83,49 @@ model_2y <- gsynth(total ~ treat_post,
 plot(model_2y, type = "gap", xlim = c(-24, 24))
 
 # use crime_rate instead of total
-str(dt_analyze)
 model_crime_rate <- gsynth(crime_rate ~ treat_post, 
                data = dt_analyze, index = c("census_t_1","time_index"), 
                se = TRUE, inference = "parametric", 
                r = c(0,5), CV = TRUE, force = "two-way", 
                nboots = 1000, seed = 02139)
-plot(model_crime_rate, type = "gap")
+plot(model_crime_rate, type = "gap", xlim = c(-24, 24))
+
+# Use quarterly data
+dt_analyze_q = fread("crime_rate_q_trimmed_adj.csv")
+dt_analyze_q[, q_year := paste(quarter, year.x, sep = "/")]
+quarter_year = unique(dt_analyze_q$q_year)
+# create a new column which is a row index in q_year
+dt_analyze_q[, time_index := match(q_year, dt_analyze_q$q_year)]
+# Treated variable
+dt_analyze_q$treat_post = fifelse(dt_analyze_q$stock_units > 0, 1, 0)
+dt_analyze_q$treat <- ifelse(dt_analyze_q$census_t_1 %in% dt_analyze_q[treat_post == 1, census_t_1], 1, 0)
+model_crime_rate_q <- gsynth(crime_rate ~ treat_post, 
+               data = dt_analyze_q, index = c("census_t_1","time_index"), 
+               se = TRUE, inference = "parametric", 
+               r = c(0,5), CV = TRUE, force = "two-way", 
+               nboots = 1000, seed = 02139, min.T0 = 7)
+plot(model_crime_rate_q, type = "gap", xlim = c(-7, 14))
+model_crime_rate_q$Ntr
+# see how many units demolished in total 
+sum(dt_analyze_q$no_units)
+
+### increase min.T0 to 14
+model_crime_rate_q_late <- gsynth(crime_rate ~ treat_post, 
+               data = dt_analyze_q, index = c("census_t_1","time_index"), 
+               se = TRUE, inference = "parametric", 
+               r = c(0,5), CV = TRUE, force = "two-way", 
+               nboots = 1000, seed = 02139, min.T0 = 14)
+plot(model_crime_rate_q_late, type = "gap", xlim = c(-14, 14))
+model_crime_rate_q_late$Ntr
+
+### Use adjusted population
+model_crime_rate_q_adj <- gsynth(crime_rate_adj ~ treat_post, 
+               data = dt_analyze_q, index = c("census_t_1","time_index"), 
+               se = TRUE, inference = "parametric", 
+               r = c(0,5), CV = TRUE, force = "two-way", 
+               nboots = 1000, seed = 02139, min.T0 = 7)
+plot(model_crime_rate_q_adj, type = "gap", xlim = c(-7, 14))
+
 ### TEST
 data(gsynth)
 names(turnout)
