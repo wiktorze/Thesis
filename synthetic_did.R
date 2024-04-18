@@ -125,7 +125,7 @@ model_crime_rate_q_adj <- gsynth(crime_rate_adj ~ treat_post,
                r = c(0,5), CV = TRUE, force = "two-way", 
                nboots = 1000, seed = 02139, min.T0 = 7)
 plot(model_crime_rate_q_adj, type = "gap", xlim = c(-7, 14))
-
+model_crime_rate_q_adj$Ntr
 ### TEST
 data(gsynth)
 names(turnout)
