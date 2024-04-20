@@ -86,7 +86,6 @@ model_2y <- gsynth(total ~ treat_post,
 plot(model_2y, type = "gap")
 plot(model_2y, type = "counterfactual", raw = "all")
 
-
 # use crime_rate instead of total
 model_crime_rate <- gsynth(crime_rate ~ treat_post, 
                data = dt_analyze, index = c("census_t_1","time_index"), 
@@ -98,6 +97,9 @@ png("Figures/synth_did_crime_rate.png")
 plot(model_crime_rate, type = "gap")
 dev.off()
 
+# write dt_analyze
+fwrite(dt_analyze, "dt_analyze.csv")
+
 # Use quarterly data
 dt_analyze_q = fread("crime_rate_q_trimmed_adj.csv")
 dt_analyze_q[, q_year := paste(quarter, year.x, sep = "/")]
@@ -107,7 +109,8 @@ dt_analyze_q[, time_index := match(q_year, dt_analyze_q$q_year)]
 # Treated variable
 dt_analyze_q$treat_post = fifelse(dt_analyze_q$stock_units > 0, 1, 0)
 dt_analyze_q$treat <- ifelse(dt_analyze_q$census_t_1 %in% dt_analyze_q[treat_post == 1, census_t_1], 1, 0)
-
+# write dt_analyze_q
+fwrite(dt_analyze_q, "dt_analyze_q.csv")
 
 model_crime_rate_q <- gsynth(crime_rate ~ treat_post, 
                data = dt_analyze_q, index = c("census_t_1","time_index"), 
@@ -178,3 +181,5 @@ model_crime_rate_q_log_adj <- gsynth(crime_rate_log_adj ~ treat_post,
 
 plot(model_crime_rate_q_log_adj, type = "gap", xlim = c(-7, 30))
 model_crime_rate_q_log_adj$Ntr
+
+fwrite(dt_analyze_q_log, "dt_analyze_q_log.csv")
