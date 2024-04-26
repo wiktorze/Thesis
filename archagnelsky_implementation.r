@@ -22,12 +22,19 @@ plot(tau.hat)
 # now, perform a set of estimations for all the dt_treated_tract_*.csv files
 # and save the results in a file
 file_names = list.files(pattern = "dt_treated_tract_.*csv")
-results = data.table()
+# Get tract number from file_names
+tracts = gsub("dt_treated_tract_(.*).csv", "\\1", file_names)
+results = list()
+
 for (i in 1:length(file_names)) {
     dt = fread(file_names[i])
     dt = dt[,c("census_t_1", "time_index", "total", "treat_post")]
     setup = panel.matrices(dt)
     tau.hat = synthdid_estimate(setup$Y, setup$N0, setup$T0)
     se = sqrt(vcov(tau.hat, method='placebo'))
-    fwrite(data.table(tau = tau.hat, sec = se), file = paste0("results_", file_names[i], ".csv")) 
+    tau.hat_num = as.numeric(tau.hat)
+    results[[i]] = list(tract = tracts[i], est = tau.hat_num, tau_synth = tau.hat, error = se)
 }
+
+# save results in R format
+saveRDS(results, "results.rds")
