@@ -1,6 +1,6 @@
 rm(list=ls())
 pacman::p_load(data.table)
-dt = fread("dt_analyze.csv")
+dt = fread("dt_analyze_q.csv")
 
 # Create a dataset for every treated unit with all the control units
 dt_treated = dt[dt$treat==1,]

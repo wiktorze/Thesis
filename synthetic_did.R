@@ -118,11 +118,9 @@ model_crime_rate_q <- gsynth(crime_rate ~ treat_post,
                r = c(0,5), CV = TRUE, force = "two-way", 
                nboots = 1000, seed = 02139, min.T0 = 7)
 png("Figures/synth_did_crime_rate_q.png")
-plot(model_crime_rate_q, type = "gap", xlim = c(-7, 20))
+plot(model_crime_rate_q, type = "gap", xlim = c(-7, 10))
 dev.off()
 model_crime_rate_q$Ntr
-# see how many units demolished in total 
-sum(dt_analyze_q$no_units)
 
 ### increase min.T0 to 14
 model_crime_rate_q_late <- gsynth(crime_rate ~ treat_post, 
@@ -142,7 +140,7 @@ model_crime_rate_q_adj <- gsynth(crime_rate_adj ~ treat_post,
                r = c(0,5), CV = TRUE, force = "two-way", 
                nboots = 1000, seed = 02139, min.T0 = 7)
 png("Figures/synth_did_crime_rate_q_adj.png")
-plot(model_crime_rate_q_adj, type = "gap", xlim = c(-7, 20))
+plot(model_crime_rate_q_adj, type = "gap", xlim = c(-7, 10))
 dev.off()
 model_crime_rate_q_adj$Ntr
 
@@ -153,21 +151,20 @@ model_crime_rate_q_adj_late <- gsynth(crime_rate_adj ~ treat_post,
                r = c(0,5), CV = TRUE, force = "two-way", 
                nboots = 1000, seed = 02139, min.T0 = 14)
 png("Figures/synth_did_crime_rate_q_adj_late.png")
-plot(model_crime_rate_q_adj_late, type = "gap", xlim = c(-14, 20))
+plot(model_crime_rate_q_adj_late, type = "gap", xlim = c(-14, 14))
 dev.off()
 
 # take log of crime_rate
-# remove all tracts where crime_rate = 0
-tract_to_remove = unique(dt_analyze_q[crime_rate == 0, census_t_1])
-dt_analyze_q_log = dt_analyze_q[!census_t_1 %in% tract_to_remove]
+# remove all observations where crime_rate = 0
+dt_analyze_q_log = dt_analyze_q[crime_rate != 0]
 dt_analyze_q_log[, crime_rate_log := log(crime_rate)]
 model_crime_rate_q_log <- gsynth(crime_rate_log ~ treat_post, 
                data = dt_analyze_q_log, index = c("census_t_1","time_index"), 
                se = TRUE, inference = "parametric", 
                r = c(0,5), CV = TRUE, force = "two-way", 
                nboots = 1000, seed = 02139, min.T0 = 7)
-png("Figures/synth_did_crime_rate_q_log.png")
-plot(model_crime_rate_q_log, type = "gap", xlim = c(-7, 30))
+png("Figures/synth_did_crime_rate_q_log_50.png")
+plot(model_crime_rate_q_log, type = "gap", xlim = c(-7, 10))
 dev.off()
 model_crime_rate_q_log$Ntr
 
@@ -179,7 +176,7 @@ model_crime_rate_q_log_adj <- gsynth(crime_rate_log_adj ~ treat_post,
                r = c(0,5), CV = TRUE, force = "two-way", 
                nboots = 1000, seed = 02139, min.T0 = 7)
 
-plot(model_crime_rate_q_log_adj, type = "gap", xlim = c(-7, 30))
+plot(model_crime_rate_q_log_adj, type = "gap", xlim = c(-7, 10))
 model_crime_rate_q_log_adj$Ntr
 
 fwrite(dt_analyze_q_log, "dt_analyze_q_log.csv")
