@@ -39,7 +39,6 @@ units_merged[, demo_eviction := demo_start - 150]
 units_merged_sf = st_as_sf(units_merged, coords = c("project_long", "project_lat"), crs = st_crs(tracts))
 
 # Plot them
-# plot tractce==839100
 plot(st_geometry(tracts), border="#aaaaaa")
 points(housing_tract$project_long, housing_tract$project_lat, col = "blue", pch = 20)
 plot(st_geometry(units_merged_sf), add = TRUE, pch = 20, col = "red")
@@ -67,18 +66,24 @@ units_per_tract_e = units_merged_dt[, .(no_units = sum(units)), by = c("census_t
 # for each tract and date
 # First, create a data.table with all the tracts and dates
 tracts_dt = as.data.table(tracts)[, c("census_t_1")]
+# unique and sort tracts_dt
+tracts_dt = unique(tracts_dt)
+# are all units_per_tract$census_t_1 in tracts_dt$census_t_1?
+unique(units_per_tract$census_t_1) %in% tracts_dt$census_t_1
+# yes
 # For each tract, expand it for years from 1999 to 2010 and create a year field
-tracts_dt = tracts_dt[rep(seq_len(nrow(tracts_dt)), each = 12), .(census_t_1, year = 1999:2010)]
+tracts_dt = tracts_dt[rep(seq_len(nrow(tracts_dt)), each = 13), .(census_t_1, year = 1999:2011)]
 # Now, do the same for months from 1 to 12
 tracts_dt = tracts_dt[rep(seq_len(nrow(tracts_dt)), each = 12), .(census_t_1, year, month = 1:12)]
 
 # Based on the year and month, create a new field with the month and year
-tracts_dt[, month_year := as.Date(paste("01", month, year, sep = "/"), format = "%d/%m/%Y")]
-
+tracts_dt[, month_year := as.Date(paste(year, month, "01", sep = "/"), format = "%Y/%m/%d")]
+tracts_dt[, month_year := as.character(month_year)]
+units_per_tract[, month_year := as.character(month_year)]
 # Now, add units from units_per_tract to tracts_dt
 tracts_dt_e = merge(tracts_dt, units_per_tract_e, by.x = c("census_t_1", "month_year"), by.y = c("census_t_1", "month_year_e"), all.x = TRUE)
 tracts_dt = merge(tracts_dt, units_per_tract, by = c("census_t_1", "month_year"), all.x = TRUE) 
-
+sum(tracts_dt_new$no_units, na.rm = TRUE)
 # Replace NAs with 0
 tracts_dt[is.na(no_units), no_units := 0]
 tracts_dt_e[is.na(no_units), no_units := 0]
@@ -122,11 +127,9 @@ crime_agg[, month_year := as.Date(paste("01", monthofyear, year, sep = "/"), for
 fwrite(crime_agg, "crime_agg_tract.csv")
 
 # Join number of units demolished to the crime_agg
+crime_agg[,month_year := as.character(month_year)]
 crime_agg_units = merge(crime_agg, tracts_dt, by = c("census_t_1", "month_year"))
 # Check how many tracts have stock_units>0
 length(unique(crime_agg_units[census_t_1 %in% crime_agg_units[stock_units > 0, census_t_1], census_t_1]))
 # still 42
 fwrite(crime_agg_units, "crime_agg_units.csv")
-
-crime_agg_units_e = merge(crime_agg, tracts_dt_e, by = c("census_t_1", "month_year"))
-fwrite(crime_agg_units_e, "crime_agg_units_e.csv")
