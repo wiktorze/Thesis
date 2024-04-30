@@ -23,7 +23,7 @@ results = list()
 for (i in 1:length(file_names)) {
     dt = fread(file_names[i])
     w = dt[treat_index == 1, no_units][-1]
-    dt = dt[,c("census_t_1", "time_index", "crime_rate", "treat_post")]
+    dt = dt[,c("census_t_1", "time_index", "log_crime_rate", "treat_post")]
     setup = panel.matrices(dt)
     tau.hat = synthdid_estimate(setup$Y, setup$N0, setup$T0)
     se = sqrt(vcov(tau.hat, method='placebo'))

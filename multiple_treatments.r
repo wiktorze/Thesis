@@ -56,3 +56,5 @@ saveRDS(l, "./synthdid_dt/l.rds")
 # for gsynth
 dt_gsynth = unique(rbindlist(l))
 saveRDS(dt_gsynth, "./gsynth_dt/dt_gsynth.rds")
+
+# see with how many treated units we're left honestly... and how many demolitions
