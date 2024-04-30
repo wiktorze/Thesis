@@ -1,7 +1,8 @@
 ### ADJUST FOR POPULATION ###
 # If 1 unit demolished population is reduced by 1
 rm(list=ls())
-crime_rate_q_trimmed = fread("crime_rate_q_trimmed.csv")
+pacman::p_load(data.table)
+crime_rate_q_trimmed = fread("crime_rates/crime_rate_q_trimmed.csv")
 # once a unit is demolished, population is reduced by 2 in all periods after
 crime_rate_q_trimmed[, adj_population := pop - cumsum(no_units * 1), by = .(census_t_1)] 
 
