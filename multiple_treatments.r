@@ -5,15 +5,25 @@
 rm(list=ls())
 pacman::p_load(data.table)
 dt = fread("dt_analyze_q.csv")
+# check number of treated units
+dt[treat_post == 1, .N, by = census_t_1]
+# 42 treated
+# check first_treat by census_t_1
+dt[treat_post == 1, .(first_treat = min(time_index)), by = census_t_1]
 # exclude last quarter
 dt = dt[time_index != 49]
 
-dt[, treat_change := cumsum(no_units > 50), by = census_t_1]
+dt[, treat_change := cumsum(no_units > 0), by = census_t_1]
+sum(dt$no_units)
 
 # keep tracts with minimum 7 quarters of pre-treatment data
-# so only where treat_post == 1 when time_index >= 7
-census_nest = unique(dt[time_index <= 7 & treat_post == 1]$census_t_1)
-dt_est = dt[!(census_t_1 %in% census_nest)]
+# so remove the first treatment if started before 7th quarter
+# remove these rows: dt[treat_change != 0 & time_index < 7]
+dt_est = dt[!(treat_change != 0 & time_index < 7)]
+dt_est[, treat_change := cumsum(no_units > 0), by = census_t_1]
+sum(dt_est$no_units)
+
+# 31 treated
 dt_est[, treat_index := 0]
 # create a column which starts indexes the treatment until it changes
 # so if the treat_change > 0 and stays the same, the index is 1, 2, 3, etc.
@@ -43,8 +53,12 @@ l_n = list()
 
 for(i in 1:nrow(dt_new)){
     dt_n = dt_est[census_t_1 == dt_new[i, census_t_1] & time_index <= min(dt_new[i, time_index] + 10, dt_new[i, time_index] + dt_new[i, treat_index_max] - 1)]
+    # now, treat_post is different - it's when the last treatment_change occurs
+    dt_n[, treat_post := fifelse(time_index >= dt_new[i, time_index], 1, 0)]
+    dt_n[, id := paste0(census_t_1, "_", i)]
     # bind non-treated
     dt_nt = dt_est[treat == 0 & time_index <= min(dt_new[i, time_index] + 10, dt_new[i, time_index] + dt_new[i, treat_index_max] - 1)]
+    dt_nt[, id := as.character(census_t_1)]
     dt_n2 = rbind(dt_n, dt_nt)
     # write dt_n2 to csv
     fwrite(dt_n2, paste0("./synthdid_dt/", dt_new[i, census_t_1], "_", dt_new[i, treat_change], ".csv"))
@@ -55,6 +69,9 @@ for(i in 1:nrow(dt_new)){
 saveRDS(l, "./synthdid_dt/l.rds")
 # for gsynth
 dt_gsynth = unique(rbindlist(l))
+
 saveRDS(dt_gsynth, "./gsynth_dt/dt_gsynth.rds")
 
-# see with how many treated units we're left honestly... and how many demolitions
+# how many units in the analysis?
+sum(unique(dt_gsynth[, .(census_t_1, no_units, time_index)])$no_units)
+# 16,054
