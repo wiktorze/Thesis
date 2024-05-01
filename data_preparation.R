@@ -40,8 +40,33 @@ units_merged_sf = st_as_sf(units_merged, coords = c("project_long", "project_lat
 
 # Plot them
 plot(st_geometry(tracts), border="#aaaaaa")
-points(housing_tract$project_long, housing_tract$project_lat, col = "blue", pch = 20)
 plot(st_geometry(units_merged_sf), add = TRUE, pch = 20, col = "red")
+
+pop <- read.table("/Users/mac/Downloads/tract_pop.txt", header = FALSE, sep = ",", 
+                   colClasses = c("character", "character", "character", "character", "character"))  # Adjust types as needed
+pop = as.data.table(pop)
+pop = pop[V1 == "17" & V2 == "031",]
+setnames(pop, "V3", "census_tra")
+setnames(pop, "V4", "pop")
+setnames(pop, "V5", "center_lat")
+setnames(pop, "V6", "center_long")
+pop = pop[,-c(1,2)]
+# turn pop to numeric
+pop$pop = as.numeric(pop$pop)
+pop$center_lat = as.numeric(pop$center_lat)
+pop$center_long = as.numeric(pop$center_long)
+View(pop)
+summary(pop$pop)
+
+pop_tract = merge(tracts, pop, by = "census_tra")
+
+pop_tract = pop_tract[, c("census_t_1", "pop")]
+
+# plot tract by population with points of public housing
+ggplot() + 
+geom_sf(data = pop_tract, aes(fill = pop)) + 
+geom_sf(data = units_merged_sf, pch = 20, col = "red") +
+theme_minimal()
 
 # To each demolished unit, get the census_t_1
 units_merged_tract = st_join(units_merged_sf, tracts, join = st_intersects)

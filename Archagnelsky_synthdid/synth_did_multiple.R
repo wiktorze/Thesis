@@ -9,9 +9,11 @@ file_names = list.files(pattern = ".*csv")
 # Get tract number from file_names
 tracts = gsub("(.*).csv", "\\1", file_names)
 results = list()
-
+i = 4
 for (i in 1:length(file_names)) {
     dt = fread(file_names[i])
+    # make sure time_index for non-treated is the same as treated
+    dt = dt[time_index >= min(dt[treat == 1, time_index])]
     w = dt[treat_index == 1, no_units][nrow(dt[treat_index == 1])]
     stock_u = dt[treat_index == 1, stock_units][nrow(dt[treat_index == 1])]
     # stock_u last period

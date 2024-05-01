@@ -108,6 +108,14 @@ dt_analyze_q[, time_index := match(q_year, dt_analyze_q$q_year)]
 # Treated variable
 dt_analyze_q$treat_post = fifelse(dt_analyze_q$stock_units > 0, 1, 0)
 dt_analyze_q$treat <- ifelse(dt_analyze_q$census_t_1 %in% dt_analyze_q[treat_post == 1, census_t_1], 1, 0)
+### Use adjusted population
+dt_analyze_q[, adj_population := pop - cumsum(no_units * 1), by = .(census_t_1)] 
+dt_analyze_q[, crime_rate_adj := fifelse(adj_population <= 0, 0, total/adj_population*1000)]
+# winsorize
+dt_analyze_q[, crime_rate_adj := fifelse(crime_rate_adj > quantile(crime_rate_adj, 0.95), quantile(crime_rate_adj, 0.95), crime_rate_adj)]
+dt_analyze_q[, crime_rate_adj := fifelse(crime_rate_adj < quantile(crime_rate_adj, 0.05), quantile(crime_rate_adj, 0.05), crime_rate_adj)]
+summary(dt_analyze_q$crime_rate_adj)
+dt_analyze_q[, log_crime_rate_adj := log(crime_rate_adj)]
 # write dt_analyze_q
 fwrite(dt_analyze_q, "dt_analyze_q.csv")
 

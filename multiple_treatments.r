@@ -5,6 +5,7 @@
 rm(list=ls())
 pacman::p_load(data.table)
 dt = fread("dt_analyze_q.csv")
+
 # check number of treated units
 dt[treat_post == 1, .N, by = census_t_1]
 # 42 treated
@@ -18,8 +19,9 @@ sum(dt$no_units)
 
 # keep tracts with minimum 7 quarters of pre-treatment data
 # so remove the first treatment if started before 7th quarter
-# remove these rows: dt[treat_change != 0 & time_index < 7]
-dt_est = dt[!(treat_change != 0 & time_index < 7)]
+# set no_units to 0 for the first treat_change
+dt[(treat_change != 0 & time_index < 7), no_units := 0]
+dt_est = dt
 dt_est[, treat_change := cumsum(no_units > 0), by = census_t_1]
 sum(dt_est$no_units)
 
@@ -50,7 +52,7 @@ dt_new = dt_est[treat_index == 1]
 # for each row take the window from dt_est of time_index earliest to time_index + 10
 l = list()
 l_n = list()
-
+i=24
 for(i in 1:nrow(dt_new)){
     dt_n = dt_est[census_t_1 == dt_new[i, census_t_1] & time_index <= min(dt_new[i, time_index] + 10, dt_new[i, time_index] + dt_new[i, treat_index_max] - 1)]
     # now, treat_post is different - it's when the last treatment_change occurs
@@ -66,7 +68,7 @@ for(i in 1:nrow(dt_new)){
     l[[i]] = dt_n2
 }
 # save l
-saveRDS(l, "./synthdid_dt/l.rds")
+#saveRDS(l, "./synthdid_dt/l.rds")
 # for gsynth
 dt_gsynth = unique(rbindlist(l))
 
