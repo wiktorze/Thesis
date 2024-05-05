@@ -1,6 +1,9 @@
 # Crime Rates
 rm(list=ls())
-pacman::p_load(data.table, haven, stringr, data.table, ggplot2, parallel, readxl, sf, viridis, scales)
+pacman::p_load(data.table, haven, stringr, 
+data.table, ggplot2, parallel, readxl, sf, viridis, 
+scales, svglite, gridExtra)
+
 crime = fread("./2_intermediary/crime_agg_units.csv")
 treated_units_before = crime[stock_units > 0, sum(no_units), by = census_t_1]
 sum(treated_units_before$V1)
@@ -72,13 +75,16 @@ mean_treated = crime_rate[treat == 1, .(mean_total = mean(total)), by = month_ye
 mean_untreated = crime_rate[treat == 0, .(mean_total = mean(total)), by = month_year]
 
 # plot mean of total crimes for treated and untreated tracts by month_year on the same graph
+pdf(file = "./3_results/Figures/Descriptives/crime_t_ut.pdf")
 ggplot() +
   geom_line(data = mean_treated, aes(x = month_year, y = mean_total, color = "Treated")) +
   geom_line(data = mean_untreated, aes(x = month_year, y = mean_total, color = "Untreated")) +
-  labs(title = "Mean total crimes for treated and untreated tracts by month_year",
-       x = "Month Year",
-       y = "Mean Total Crimes") +
+  labs(title = "",
+       x = "",
+       y = "Mean Total Crimes",
+       color = "") +
   theme_minimal()
+dev.off()
 
 ### UNITS DEMOLSIHED
 ph_tract = fread("/Users/mac/Documents/Thesis/100512-V1/Replication/PH_CensusTract_Xwalk.csv")
@@ -127,73 +133,157 @@ tracts_min = tracts[, c("census_t_1", "geometry")]
 econ_tract = merge(tracts_min, subset_econ, by = "census_t_1")
 # plot tracts by median income, poverty_fam, unemployment side by side
 # use colorful scale to differentiate easily
-par(mfrow = c(1, 3))
+# get rid of the grid in the background and axis
+pdf(file = "./3_results/Figures/Descriptives/income.pdf")
 ggplot() +
   geom_sf(data = econ_tract, aes(fill = median_income)) +
-  geom_sf(data = units_merged_sf, pch = 20, col = "red") +
+  geom_sf(data = units_merged_sf, pch = 20, col = "red", size = 0.5) +
   labs(title = "",
        fill = "Median Income") +
   theme_minimal() +
-  scale_fill_viridis() 
+  scale_fill_viridis() + 
+  theme(panel.grid = element_blank(),  
+        axis.line = element_blank(), 
+        axis.text = element_blank(),  
+        axis.ticks = element_blank(),
+        legend.position = "bottom",  # Place legend at the bottom
+        legend.key.size = unit(1, 'cm'),  # Reduce legend key size 
+        legend.title = element_text(size = 11),  # Reduce legend title size 
+        plot.margin = unit(c(0, 0, 0, 0), "cm"))  # Adjust margins
+
+dev.off()
+
+pdf(file = "./3_results/Figures/Descriptives/poverty.pdf")
 # add points of public housing
 ggplot() +
   geom_sf(data = econ_tract, aes(fill = poverty_fam)) +
-  geom_sf(data = units_merged_sf, pch = 20, col = "red") +
+  geom_sf(data = units_merged_sf, pch = 20, col = "red", size = 0.5) +
   labs(title = "",
        fill = "Family Poverty Rate") +
   theme_minimal() +
-  scale_fill_viridis() 
+  scale_fill_viridis() + 
+  theme(panel.grid = element_blank(),  
+        axis.line = element_blank(), 
+        axis.text = element_blank(),  
+        axis.ticks = element_blank(),
+        legend.position = "bottom",  # Place legend at the bottom
+        legend.key.size = unit(1, 'cm'),  # Reduce legend key size 
+        legend.title = element_text(size = 11),  # Reduce legend title size 
+        plot.margin = unit(c(0, 0, 0, 0), "cm"))  # Adjust margins
+dev.off()
+
+pdf(file = "./3_results/Figures/Descriptives/unemployment.pdf")
 
 ggplot() +
   geom_sf(data = econ_tract, aes(fill = unemployed)) +
-  geom_sf(data = units_merged_sf, pch = 20, col = "red") +
+  geom_sf(data = units_merged_sf, pch = 20, col = "red", size = 0.5) +
   labs(title = "",
        fill = "Unemployment Rate") +
   theme_minimal() +
-  scale_fill_viridis() 
+  scale_fill_viridis() + 
+  theme(panel.grid = element_blank(),  
+        axis.line = element_blank(), 
+        axis.text = element_blank(),  
+        axis.ticks = element_blank(),
+        legend.position = "bottom",  # Place legend at the bottom
+        legend.key.size = unit(1, 'cm'),  # Reduce legend key size 
+        legend.title = element_text(size = 11),  # Reduce legend title size 
+        plot.margin = unit(c(0, 0, 0, 0), "cm"))  # Adjust margins
+dev.off()
 
 # Crimes by tract
 crime_tract_00 = crime_rate[year.x == 2000, .(total = sum(total)), by = census_t_1]
 # join with tract
 crime_tract_00 = merge(tracts_min, crime_tract_00, by = "census_t_1")
+pdf(file = "./3_results/Figures/Descriptives/total_crime_00.pdf")
 ggplot() +
   geom_sf(data = crime_tract_00, aes(fill = total)) +
-  geom_sf(data = units_merged_sf, pch = 20, col = "red") +
-  labs(title = "Total crimes by tract in 2000",
+  geom_sf(data = units_merged_sf, pch = 20, col = "red", size = 0.5) +
+  labs(title = "",
        fill = "Total Crimes") +
   theme_minimal() +
-  scale_fill_viridis()
+  scale_fill_viridis() + 
+  theme(panel.grid = element_blank(),  
+        axis.line = element_blank(), 
+        axis.text = element_blank(),  
+        axis.ticks = element_blank(),
+        legend.position = "bottom",  # Place legend at the bottom
+        legend.key.size = unit(1, 'cm'),  # Reduce legend key size 
+        legend.title = element_text(size = 11),  # Reduce legend title size 
+        plot.margin = unit(c(0, 0, 0, 0), "cm"))  # Adjust margins
+dev.off()
 
 # winsorized data that I'm using
-dt_analyze = fread("./2_intermediary/dt_analyze.csv")
+dt_analyze = fread("./2_intermediary/dt_analyze_q.csv")
 dt_analyze_00 = dt_analyze[year.x == 2000, .(crime_rate = mean(crime_rate)), by = census_t_1]
 # join with tract
 dt_analyze_00 = merge(tracts_min, dt_analyze_00, by = "census_t_1")
 # plot crime rate by tract
 ggplot() +
   geom_sf(data = dt_analyze_00, aes(fill = crime_rate)) +
-  geom_sf(data = units_merged_sf, pch = 20, col = "red") +
-  labs(title = "Crime rate by tract in 2000",
+  geom_sf(data = units_merged_sf, pch = 10, col = "red", size = 0.5) +
+  labs(title = "",
        fill = "Crime Rate") +
   theme_minimal() +
-  scale_fill_viridis()
+  scale_fill_viridis() + 
+  theme(panel.grid = element_blank(),  
+        axis.line = element_blank(), 
+        axis.text = element_blank(),  
+        axis.ticks = element_blank(),
+        legend.position = "right",  # Place legend at the bottom
+        legend.key.size = unit(0.4, 'cm'),  # Reduce legend key size 
+        legend.title = element_text(size = 8),  # Reduce legend title size 
+        plot.margin = unit(c(0, 0, 0, 0), "cm"))  # Adjust margins
+ggsave("./3_results/Figures/Descriptives/crime_rate_00.pdf", width = 10, height = 10, units = "cm")
+
 
 # Crimes by year (bar) vs units demolished by year (line)
 # use 2 different scales on left and right
 crime_agg = crime_rate[, .(total = sum(total)), by = year.x][, year := year.x][year!=2011]
-units_agg = crime_rate[, .(no_units = sum(stock_units)), by = year.x][, year := year.x][year!=2011]
+units_agg = crime_rate[, .(no_units = sum(no_units)), by = year.x][, year := year.x][,year.x := NULL][year!=2011]
+units_agg[, stock_units := cumsum(no_units)]
+# Assuming you have your data in 'crime_agg' and 'units_agg' data frames
+
 ggplot() +
   geom_bar(data = crime_agg, aes(x = year, y = total), stat = "identity") +
-  geom_line(data = units_agg, aes(x = year, y = no_units), color = "red") +
-  labs(title = "Total crimes by year vs units demolished by year",
+  geom_line(data = units_agg, aes(x = year, y = stock_units*10), color = "red", lwd = 2) +
+  labs(title = "",
        x = "Year",
        y = "Total Crimes") +
   theme_minimal() +
   scale_y_continuous(name = "Total Crimes", 
-                     sec.axis = sec_axis(~ . * max(crime_agg$total)/max(units_agg$no_units), 
+                     sec.axis = sec_axis(~ . /10, 
                                          name = "Units Demolished", 
-                                         breaks = pretty_breaks())) 
+                                         breaks = pretty_breaks(), labels = scales::comma),
+                     labels = scales::comma)
+ 
+
+ggsave("./3_results/Figures/Descriptives/demo_vs_crime.pdf", width = 10, height = 10, units = "cm")
 
 # Number of units demolished by tract
 units_tract = units_merged[, .(no_units = sum(units)), by = CTIDFP00]
+# save as latex table
+hist(units_tract$no_units)
 print(units_tract[order(no_units, decreasing = TRUE)])
+0.8*sum(units_tract$no_units)
+sum(units_tract[order(no_units, decreasing = TRUE)]$no_units[1:10])/sum(units_tract$no_units)
+# average demolition size
+summary(units_merged$units)
+hist(units_merged$units)
+
+# treated vs control characteristics in 2000
+tracts_treated = units_merged[, .(no_units = sum(units)), by = CTIDFP00]
+tracts_treated[, treat := 1] 
+colnames(tracts_treated)[1] = "census_t_1"
+tracts_treated[, census_t_1 := as.character(census_t_1)]
+econ_t_ut = merge(tracts_treated, econ_tract, by = "census_t_1", all.y = TRUE)
+econ_t_ut[, treat := fifelse(is.na(treat), 0, treat)]
+# summary stats
+summary(econ_t_ut[treat == 1, median_income])
+summary(econ_t_ut[treat != 1, median_income])
+
+summary(econ_t_ut[treat == 1, poverty_fam])
+summary(econ_t_ut[treat != 1, poverty_fam])
+
+summary(econ_t_ut[treat == 1, unemployed])
+summary(econ_t_ut[treat != 1, unemployed])

@@ -45,6 +45,7 @@ dt_analyze[, first_treat := min(time_index[treat_post == 1]), by = census_t_1]
 # write dt_analyze
 fwrite(dt_analyze, "dt_analyze.csv")
 
+dt_analyze = fread("./2_intermediary/dt_analyze.csv")
 # get rid of ticks on x-axis
 png("Figures/treatment_time.png")
 panelview(total ~ treat_post, data = dt_analyze, 
@@ -117,18 +118,34 @@ dt_analyze_q[, crime_rate_adj := fifelse(crime_rate_adj < quantile(crime_rate_ad
 summary(dt_analyze_q$crime_rate_adj)
 dt_analyze_q[, log_crime_rate_adj := log(crime_rate_adj)]
 # write dt_analyze_q
-fwrite(dt_analyze_q, "dt_analyze_q.csv")
+fwrite(dt_analyze_q, "./2_intermediary/dt_analyze_q.csv")
+dt_analyze_q = fread("./2_intermediary/dt_analyze_q.csv")
+dt_analyze_q = dt_analyze_q[time_index!=49]
+pdf("./3_results/Figures/treatment_time_q.pdf")
+panelview(total ~ treat_post, data = dt_analyze_q, 
+          index = c("census_t_1","time_index"), pre.post = TRUE, 
+          by.timing = TRUE, xlab = "Time index (quarter)", ylab = "Tracts", cex.axis.x = 2)
+dev.off()
 
-model_crime_rate_q <- gsynth(log_crime_rate ~ treat_post, 
+twfe_simple <- gsynth(crime_rate ~ treat_post, 
                data = dt_analyze_q, index = c("census_t_1","time_index"), 
                se = TRUE, inference = "parametric", 
-               r = c(0,5), CV = TRUE, force = "two-way", 
-               nboots = 1000, seed = 02139, min.T0 = 7)
-png("Figures/synth_did_crime_rate_q.png")
-plot(model_crime_rate_q, type = "gap", xlim = c(-7, 10))
+               r = 0, CV = FALSE, force = "two-way", 
+               nboots = 1000, seed = 02139, min.T0 = 6)
+pdf("./3_results/Figures/twfe_simple.pdf")
+plot(twfe_simple, type = "gap", xlim = c(-6, 10))
+dev.off()
+twfe_simple$att
+model_crime_rate_q <- gsynth(crime_rate ~ treat_post, 
+               data = dt_analyze_q, index = c("census_t_1","time_index"), 
+               se = TRUE, inference = "parametric", 
+               r = c(0,4), CV = TRUE, force = "two-way", 
+               nboots = 1000, seed = 02139, min.T0 = 6)
+pdf("./3_results/Figures/gsc_crime_rate_q.pdf")
+plot(model_crime_rate_q, type = "gap", xlim = c(-6, 10))
 dev.off()
 model_crime_rate_q$Ntr
-
+model_crime_rate_q$att
 ### increase min.T0 to 14
 model_crime_rate_q_late <- gsynth(crime_rate ~ treat_post, 
                data = dt_analyze_q, index = c("census_t_1","time_index"), 
@@ -142,7 +159,6 @@ model_crime_rate_q_late$Ntr
 
 
 ### Use adjusted population
-dt_analyze_q[, adj_population := pop - cumsum(no_units * 1), by = .(census_t_1)] 
 dt_analyze_q[, crime_rate_adj := fifelse(adj_population <= 0, 0, total/adj_population*1000)]
 # winsorize
 dt_analyze_q[, crime_rate_adj := fifelse(crime_rate_adj > quantile(crime_rate_adj, 0.95), quantile(crime_rate_adj, 0.95), crime_rate_adj)]
@@ -150,9 +166,12 @@ dt_analyze_q[, crime_rate_adj := fifelse(crime_rate_adj < quantile(crime_rate_ad
 model_crime_rate_q_adj <- gsynth(crime_rate_adj ~ treat_post, 
                data = dt_analyze_q, index = c("census_t_1","time_index"), 
                se = TRUE, inference = "parametric", 
-               r = c(0,5), CV = TRUE, force = "two-way", 
-               nboots = 1000, seed = 02139, min.T0 = 7)
-png("Figures/synth_did_crime_rate_q_adj.png")
-plot(model_crime_rate_q_adj, type = "gap", xlim = c(-7, 10))
+               r = c(0,4), CV = TRUE, force = "two-way", 
+               nboots = 1000, seed = 02139, min.T0 = 6)
+pdf("./3_results/Figures/gsc_crime_rate_q_adj.pdf")
+plot(model_crime_rate_q_adj, type = "gap", xlim = c(-6, 10))
 dev.off()
+model_crime_rate_q_adj$att
 model_crime_rate_q_adj$Ntr
+dt_analyze_q[census_t_1 %in% model_crime_rate_q_adj$id.tr, .(sum(no_units))]
+# only 11705 units left...

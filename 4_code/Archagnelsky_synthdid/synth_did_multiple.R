@@ -9,7 +9,6 @@ file_names = list.files(pattern = ".*csv")
 # Get tract number from file_names
 tracts = gsub("(.*).csv", "\\1", file_names)
 results = list()
-i = 4
 for (i in 1:length(file_names)) {
     dt = fread(file_names[i])
     # make sure time_index for non-treated is the same as treated
@@ -29,9 +28,3 @@ for (i in 1:length(file_names)) {
 
 # save results in R format
 saveRDS(results, "../Archagnelsky_synthdid/results_multiple.rds")
-
-# weight our results by units demolished in the treatment
-mean_eff = mean(sapply(results, function(x) x$est * x$w/sum(x$w)))
-mean_err = sqrt(sum(sapply(results, function(x) (x$error * x$w/sum(x$w))^2)))
-# sum all w
-sum_w = sum(sapply(results, function(x) sum(x$w)))

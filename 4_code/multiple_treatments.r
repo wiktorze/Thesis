@@ -4,7 +4,7 @@
 # create new id column that combines census_t_1 and treat_change
 rm(list=ls())
 pacman::p_load(data.table)
-dt = fread("dt_analyze_q.csv")
+dt = fread("./2_intermediary/dt_analyze_q.csv")
 
 # check number of treated units
 dt[treat_post == 1, .N, by = census_t_1]
