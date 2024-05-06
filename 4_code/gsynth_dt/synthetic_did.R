@@ -2,7 +2,7 @@
 # using the gsynth package.
 rm(list=ls())
 pacman::p_load(gsynth, data.table, panelView, ggplot2)
-dt = fread("./crime_rates/crime_rate.csv")
+dt = fread("./2_intermediary/crime_rates/crime_rate.csv")
 summary(dt$crime_rate)
 summary(dt$pop)
 summary(dt$total)
@@ -101,7 +101,7 @@ plot(model_crime_rate_diff, type = "gap", xlim = c(-12, 12))
 
 
 # Use quarterly data
-dt_analyze_q = fread("./crime_rates/crime_rate_q.csv")
+dt_analyze_q = fread("./2_intermediary/crime_rates/crime_rate_q.csv")
 dt_analyze_q[, q_year := paste(quarter, year.x, sep = "/")]
 quarter_year = unique(dt_analyze_q$q_year)
 # create a new column which is a row index in q_year
@@ -127,7 +127,7 @@ panelview(total ~ treat_post, data = dt_analyze_q,
           by.timing = TRUE, xlab = "Time index (quarter)", ylab = "Tracts", cex.axis.x = 2)
 dev.off()
 
-twfe_simple <- gsynth(crime_rate ~ treat_post, 
+twfe_simple <- gsynth(crime_rate_adj ~ treat_post, 
                data = dt_analyze_q, index = c("census_t_1","time_index"), 
                se = TRUE, inference = "parametric", 
                r = 0, CV = FALSE, force = "two-way", 
@@ -135,7 +135,8 @@ twfe_simple <- gsynth(crime_rate ~ treat_post,
 pdf("./3_results/Figures/twfe_simple.pdf")
 plot(twfe_simple, type = "gap", xlim = c(-6, 10))
 dev.off()
-twfe_simple$att
+twfe_simple$est.att
+
 model_crime_rate_q <- gsynth(crime_rate ~ treat_post, 
                data = dt_analyze_q, index = c("census_t_1","time_index"), 
                se = TRUE, inference = "parametric", 
@@ -145,7 +146,7 @@ pdf("./3_results/Figures/gsc_crime_rate_q.pdf")
 plot(model_crime_rate_q, type = "gap", xlim = c(-6, 10))
 dev.off()
 model_crime_rate_q$Ntr
-model_crime_rate_q$att
+model_crime_rate_q$est.att
 ### increase min.T0 to 14
 model_crime_rate_q_late <- gsynth(crime_rate ~ treat_post, 
                data = dt_analyze_q, index = c("census_t_1","time_index"), 
@@ -171,7 +172,7 @@ model_crime_rate_q_adj <- gsynth(crime_rate_adj ~ treat_post,
 pdf("./3_results/Figures/gsc_crime_rate_q_adj.pdf")
 plot(model_crime_rate_q_adj, type = "gap", xlim = c(-6, 10))
 dev.off()
-model_crime_rate_q_adj$att
+model_crime_rate_q_adj$est.att
 model_crime_rate_q_adj$Ntr
 dt_analyze_q[census_t_1 %in% model_crime_rate_q_adj$id.tr, .(sum(no_units))]
 # only 11705 units left...

@@ -5,6 +5,8 @@
 rm(list=ls())
 pacman::p_load(data.table)
 dt = fread("./2_intermediary/dt_analyze_q.csv")
+View(dt)
+# redefine treatment as no_units > 75
 
 # check number of treated units
 dt[treat_post == 1, .N, by = census_t_1]
@@ -14,7 +16,7 @@ dt[treat_post == 1, .(first_treat = min(time_index)), by = census_t_1]
 # exclude last quarter
 dt = dt[time_index != 49]
 
-dt[, treat_change := cumsum(no_units > 0), by = census_t_1]
+dt[, treat_change := cumsum(no_units > 75), by = census_t_1]
 sum(dt$no_units)
 
 # keep tracts with minimum 7 quarters of pre-treatment data
@@ -22,7 +24,7 @@ sum(dt$no_units)
 # set no_units to 0 for the first treat_change
 dt[(treat_change != 0 & time_index < 7), no_units := 0]
 dt_est = dt
-dt_est[, treat_change := cumsum(no_units > 0), by = census_t_1]
+dt_est[, treat_change := cumsum(no_units > 75), by = census_t_1]
 sum(dt_est$no_units)
 
 # 31 treated
@@ -52,7 +54,7 @@ dt_new = dt_est[treat_index == 1]
 # for each row take the window from dt_est of time_index earliest to time_index + 10
 l = list()
 l_n = list()
-i=24
+
 for(i in 1:nrow(dt_new)){
     dt_n = dt_est[census_t_1 == dt_new[i, census_t_1] & time_index <= min(dt_new[i, time_index] + 10, dt_new[i, time_index] + dt_new[i, treat_index_max] - 1)]
     # now, treat_post is different - it's when the last treatment_change occurs
@@ -63,7 +65,7 @@ for(i in 1:nrow(dt_new)){
     dt_nt[, id := as.character(census_t_1)]
     dt_n2 = rbind(dt_n, dt_nt)
     # write dt_n2 to csv
-    fwrite(dt_n2, paste0("./synthdid_dt/", dt_new[i, census_t_1], "_", dt_new[i, treat_change], ".csv"))
+    #fwrite(dt_n2, paste0("./synthdid_dt/", dt_new[i, census_t_1], "_", dt_new[i, treat_change], ".csv"))
     l_n[[i]] = dt_n
     l[[i]] = dt_n2
 }
@@ -72,7 +74,7 @@ for(i in 1:nrow(dt_new)){
 # for gsynth
 dt_gsynth = unique(rbindlist(l))
 
-saveRDS(dt_gsynth, "./gsynth_dt/dt_gsynth.rds")
+saveRDS(dt_gsynth, "./4_code/gsynth_dt/dt_gsynth_big.rds")
 
 # how many units in the analysis?
 sum(unique(dt_gsynth[, .(census_t_1, no_units, time_index)])$no_units)

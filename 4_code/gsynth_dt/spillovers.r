@@ -45,7 +45,6 @@ for(i in 1:length(tracts_spill$neighbors)){
 treat_spill = treat_spill[, .(no_units = sum(no_units)), by = .(census_t_1, time_index)]
 View(treat_spill[order(census_t_1, time_index)])
 length(unique(treat_spill$census_t_1))
-### SOMETHING WRONG HERE - number of neighbors is different later
 
 # build the dt_spill
 # exclude the treated tracts from the analysis
@@ -61,7 +60,7 @@ dt_spill[is.na(no_units), no_units := 0]
 # create stock_units - a cumulative sum of no_units in a tract
 dt_spill = dt_spill[order(census_t_1, time_index)]
 dt_spill[, stock_units := cumsum(no_units), by = census_t_1]
-View(dt_spill[stock_units > 0])
+#View(dt_spill[stock_units > 0])
 
 # create treat-post
 dt_spill[, treat_post := fifelse(stock_units > 0, 1, 0)]
@@ -69,14 +68,14 @@ dt_spill$treat <- ifelse(dt_spill$census_t_1 %in% dt_spill[treat_post == 1, cens
 
 
 # first_treat
-View(dt_spill[treat_post == 1, .(first_treat = min(time_index)), by = census_t_1])
+#View(dt_spill[treat_post == 1, .(first_treat = min(time_index)), by = census_t_1])
 length(unique(dt_spill[treat_post == 1, census_t_1]))
 # exclude last quarter
 dt_spill = dt_spill[time_index != 49]
 
 dt_spill[, treat_change := cumsum(no_units > 0), by = census_t_1]
 
-# keep tracts with minimum 7 quarters of pre-treatment data
+# keep tracts with minimum 6 quarters of pre-treatment data
 # so remove the first treatment if started before 7th quarter
 # set no_units to 0 for the first treat_change
 dt_spill[(treat_change != 0 & time_index < 7), no_units := 0]
@@ -117,7 +116,7 @@ for(i in 1:nrow(dt_new)){
     dt_nt[, id := as.character(census_t_1)]
     dt_n2 = rbind(dt_n, dt_nt)
     # write dt_n2 to csv
-    #fwrite(dt_n2, paste0("./synthdid_dt/", dt_new[i, census_t_1], "_", dt_new[i, treat_change], ".csv"))
+    fwrite(dt_n2, paste0("./2_intermediary/separated_treated_tracts/spillovers/", dt_new[i, census_t_1], "_", dt_new[i, treat_change], ".csv"))
     l_n[[i]] = dt_n
     l[[i]] = dt_n2
 }

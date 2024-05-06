@@ -1,6 +1,6 @@
 rm(list = ls())
 pacman::p_load(devtools, data.table, synthdid)
-results = readRDS("./3_results/results_sdid_simple_10q.rds")
+results = readRDS("./3_results/results_sdid_simple_10q_adj.rds")
 # create a list of tau_synth
 tau_synth = lapply(results, function(x) x$tau_synth)
 
@@ -14,11 +14,13 @@ print(summary(tau_synth[[1]]))
 
 # mean of the tau_synth
 mean_tau_synth = mean(sapply(tau_synth, function(x) as.numeric(x)))
+print(mean_tau_synth)
 # - 4.87
 se = lapply(results, function(x) x$error)
 # mean error - square them, add them up, divide by the number of observations, take the square root
 se = unlist(se)
 mean_error = sqrt(sum(se^2)/length(se))
+print(mean_error)
 # 4.61
 ### multiple treatments
 results_multiple = readRDS("./3_results/results_multiple_normal_rate.rds")
