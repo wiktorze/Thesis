@@ -219,6 +219,7 @@ dt_analyze_00 = dt_analyze[year.x == 2000, .(crime_rate = mean(crime_rate)), by 
 # join with tract
 dt_analyze_00 = merge(tracts_min, dt_analyze_00, by = "census_t_1")
 # plot crime rate by tract
+pdf("./3_results/Figures/Descriptives/crime_rate_00.pdf")
 ggplot() +
   geom_sf(data = dt_analyze_00, aes(fill = crime_rate)) +
   geom_sf(data = units_merged_sf, pch = 10, col = "red", size = 0.5) +
@@ -234,6 +235,7 @@ ggplot() +
         legend.key.size = unit(0.4, 'cm'),  # Reduce legend key size 
         legend.title = element_text(size = 8),  # Reduce legend title size 
         plot.margin = unit(c(0, 0, 0, 0), "cm"))  # Adjust margins
+dev.off()
 ggsave("./3_results/Figures/Descriptives/crime_rate_00.pdf", width = 10, height = 10, units = "cm")
 
 

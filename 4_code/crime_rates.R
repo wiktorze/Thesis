@@ -1,7 +1,7 @@
 # Crime Rates
 rm(list=ls())
 pacman::p_load(data.table, haven, stringr, sf, sp, parallel, readxl)
-crime = fread("crime_agg_units.csv")
+crime = fread("2_intermediary/crime_agg_units.csv")
 treated_units_before = crime[stock_units > 0, sum(no_units), by = census_t_1]
 sum(treated_units_before$V1)
 # View(crime)
