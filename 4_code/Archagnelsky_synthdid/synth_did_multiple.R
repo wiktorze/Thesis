@@ -1,6 +1,7 @@
 # Synth_did for multiple treatments
 rm(list = ls())
 pacman::p_load(devtools, data.table, synthdid)
+#devtools::install_github("synth-inference/synthdid")
 
 # now, perform a set of estimations for all the dt_treated_tract_*.csv files
 # and save the results in a file

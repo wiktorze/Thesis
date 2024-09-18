@@ -1,6 +1,13 @@
 rm(list=ls())
-pacman::p_load(gsynth, data.table, panelView, ggplot2)
+pacman::p_load(gsynth, data.table, panelView, ggplot2, augsynth, ggrepel)
+#remotes::install_github("ebenmichael/augsynth")
+
 dt_analyze = readRDS("./4_code/gsynth_dt/dt_gsynth.rds")
+
+ppool_syn <- multisynth(crime_rate ~ treat_post, id, time_index, dt_analyze)
+
+ppool_syn_sum <- summary(ppool_syn)
+plot(ppool_syn_sum, levels = "Average")
 
 panelview(total ~ treat_post, data = dt_analyze, 
           index = c("id", "time_index"), pre.post = TRUE, 

@@ -1,17 +1,18 @@
 rm(list = ls())
-pacman::p_load(devtools, data.table, synthdid)
+pacman::p_load(devtools, data.table, synthdid, ggplot2)
 results = readRDS("./3_results/results_sdid_simple_10q_adj.rds")
 # create a list of tau_synth
 tau_synth = lapply(results, function(x) x$tau_synth)
 
 pdf("./3_results/Figures/sdid_simple_10q.pdf")
-synthdid_plot(tau_synth[1])
+p <- synthdid_plot(tau_synth[2])
+p + labs(x = "Time index (quarter)", y = "Crime rate per '000")
 dev.off()
 for(i in 1:35){
 print(tau_synth[i])
 }
-print(summary(tau_synth[[1]]))
-
+print(summary(tau_synth[[2]]))
+tau_synth[1]
 # mean of the tau_synth
 mean_tau_synth = mean(sapply(tau_synth, function(x) as.numeric(x)))
 print(mean_tau_synth)

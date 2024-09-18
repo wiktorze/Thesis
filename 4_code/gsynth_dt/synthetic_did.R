@@ -124,7 +124,9 @@ dt_analyze_q = dt_analyze_q[time_index!=49]
 pdf("./3_results/Figures/treatment_time_q.pdf")
 panelview(total ~ treat_post, data = dt_analyze_q, 
           index = c("census_t_1","time_index"), pre.post = TRUE, 
-          by.timing = TRUE, xlab = "Time index (quarter)", ylab = "Tracts", cex.axis.x = 2)
+          outcome.type = "discrete",
+          treat.type = "discrete",
+          by.timing = TRUE, xlab = "Time index (quarter)", ylab = "Number of unique treatment histories", cex.axis.x = 2)
 dev.off()
 
 twfe_simple <- gsynth(crime_rate_adj ~ treat_post, 
