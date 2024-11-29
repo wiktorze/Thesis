@@ -2,49 +2,22 @@
 rm(list=ls())
 pacman::p_load(data.table, haven, stringr, sf, sp, parallel, readxl)
 crime = fread("2_intermediary/crime_agg_units.csv")
-treated_units_before = crime[stock_units > 0, sum(no_units), by = census_t_1]
+treated_units_before = crime[stock_units > 0, sum(no_units), by = geoid10]
 sum(treated_units_before$V1)
 # View(crime)
-# Read txt files including zeros
-pop <- read.table("/Users/mac/Downloads/tract_pop.txt", header = FALSE, sep = ",", 
-                   colClasses = c("character", "character", "character", "character", "character"))  # Adjust types as needed
-pop = as.data.table(pop)
-pop = pop[V1 == "17" & V2 == "031",]
-setnames(pop, "V3", "census_tra")
-setnames(pop, "V4", "pop")
-setnames(pop, "V5", "center_lat")
-setnames(pop, "V6", "center_long")
-pop = pop[,-c(1,2)]
-# turn pop to numeric
-pop$pop = as.numeric(pop$pop)
-pop$center_lat = as.numeric(pop$center_lat)
-pop$center_long = as.numeric(pop$center_long)
-View(pop)
-summary(pop$pop)
 
-tracts = st_read("/Users/mac/Documents/Thesis/Data/Boundaries - Census Tracts - 2000/geo_export_f3cf6886-99ef-450b-9003-4ce53146d95c.shp")
-pop_tract = merge(tracts, pop, by = "census_tra")
+tracts = st_read("/Users/mac/Documents/Thesis/Data/Boundaries - Census Tracts - 2010/geo_export_24a3592a-4039-4f19-afd3-987209b1f813.shp")
 
-pop_tract = pop_tract[, c("census_t_1", "pop")]
+# recalculate total
+crime[, total := econ_crime + violent_crime + drug_crime]
 
-pop_tract = as.data.table(pop_tract)
-
-# desriptive stats for pop
-summary(pop_tract$pop)
-
-q1 = quantile(pop_tract$pop, 0.05)
-q2 = quantile(pop_tract$pop, 0.95)
-# turn census_t_1 to character
-pop_tract$census_t_1 = as.character(pop_tract$census_t_1)
-crime$census_t_1 = as.character(crime$census_t_1)
-# join pop_tract to crime on census_t_1
-crime_rate = merge(crime, pop_tract, by = "census_t_1")[, -c("geometry")]
-
-#recalculate total by adding econ_crime, violent_crime and drug_crime
-crime_rate[, total := econ_crime + violent_crime + drug_crime]
+# recalculate 3-months rolling average by geoid10
+crime[, total_ma3 := frollmean(total, 3, fill = NA), by = geoid10]
 
 # calculate crime rate in every 
-crime_rate[, crime_rate := fifelse(pop != 0, total/pop*1000, 0)]
+crime[, crime_rate_ma3 := fifelse(population != 0, total_ma3/population*1000, 0)]
+
+fwrite(crime, "./2_intermediary/crime_rate.csv")
 
 # Aggregate crimes by quarter
 crime_rate[, month_year := as.Date(month_year, format = "%m/%d/%Y")]
@@ -112,7 +85,6 @@ crime_rate[, diff_log_crime_rate := log_crime_rate - shift(log_crime_rate, fill 
 crime_rate[month_year == "1999-01-01", diff_log_crime_rate := NA]
 crime_rate_q[, diff_log_crime_rate := log_crime_rate - shift(log_crime_rate, fill = 0), by = census_t_1]
 crime_rate_q[quarter == 1 & year.x == 1999, diff_log_crime_rate := NA]
-fwrite(crime_rate, "./crime_rates/crime_rate.csv")
 fwrite(crime_rate_q, "./crime_rates/crime_rate_q.csv")
 
 # number of treated units - tracts where stock_units > 0
